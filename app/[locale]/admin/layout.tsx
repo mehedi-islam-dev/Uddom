@@ -7,12 +7,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <div className="flex min-h-screen bg-gray-50">
+      {/* পুরো লেআউটটিকে নেভবারের নিচ থেকে শুরু করার জন্য pt-20 lg:pt-24 দেওয়া হলো */}
+      <div className="flex min-h-screen bg-gray-50 pt-20 lg:pt-24">
         <div className="hidden md:block">
           <AdminNav />
         </div>
         <div className="flex-1 overflow-auto">
-          <div className="p-6 lg:p-10 pt-24 lg:pt-28 max-w-5xl">{children}</div>
+          <div className="p-6 lg:p-10 max-w-5xl">{children}</div>
         </div>
       </div>
     </NextIntlClientProvider>
