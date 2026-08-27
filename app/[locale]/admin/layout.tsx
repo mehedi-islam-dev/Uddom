@@ -8,7 +8,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <NextIntlClientProvider messages={messages}>
       <div className="flex min-h-screen bg-gray-50">
-        <AdminNav />
+        <div className="hidden md:block">
+          <AdminNav />
+        </div>
         <div className="flex-1 overflow-auto">
           <div className="p-6 lg:p-10 max-w-5xl">{children}</div>
         </div>
