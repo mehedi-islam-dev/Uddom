@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Document, Model, Schema } from 'mongoose';
 
 export interface ISiteSettings extends Document {
   coachingName: string;
@@ -13,24 +13,18 @@ export interface ISiteSettings extends Document {
 
 const SiteSettingsSchema = new Schema<ISiteSettings>(
   {
-    coachingName: { type: String, default: 'Shikkha Alo Coaching', trim: true },
-    logoUrl: { type: String, default: '', trim: true },
-    address: { type: String, default: '', trim: true },
-    phone: { type: String, default: '', trim: true },
-    email: { type: String, default: '', trim: true },
-    mapEmbedUrl: { type: String, default: '', trim: true },
-    metaTitle: { type: String, default: 'Shikkha Alo Coaching Center', trim: true },
-    metaDescription: {
-      type: String,
-      default: 'Quality education and expert coaching for academic excellence.',
-      trim: true,
-    },
+    coachingName: { type: String, default: 'Uddom Academic Care' },
+    logoUrl: { type: String, default: '' },
+    address: { type: String, default: 'Chattogram, Bangladesh' },
+    phone: { type: String, default: '' },
+    email: { type: String, default: 'uddomacademiccare2024@gmail.com' },
+    mapEmbedUrl: { type: String, default: '' },
+    metaTitle: { type: String, default: 'Uddom Academic Care | Best Coaching in Chattogram' },
+    metaDescription: { type: String, default: 'Join Uddom Academic Care for the best education.' },
   },
   { timestamps: true }
 );
 
-const SiteSettings: Model<ISiteSettings> =
-  mongoose.models.SiteSettings ??
-  mongoose.model<ISiteSettings>('SiteSettings', SiteSettingsSchema);
+const SiteSettings: Model<ISiteSettings> = mongoose.models.SiteSettings || mongoose.model<ISiteSettings>('SiteSettings', SiteSettingsSchema);
 
 export default SiteSettings;

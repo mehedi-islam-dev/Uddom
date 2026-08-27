@@ -33,3 +33,31 @@ export interface FounderData {
   messageBn: string;
   photoUrl: string;
 }
+
+export interface NoticeData {
+  _id: string;
+  titleEn: string;
+  titleBn: string;
+  descriptionEn: string;
+  descriptionBn: string;
+  date: string;
+}
+
+export interface SuccessStoryData {
+  _id: string;
+  studentNameEn: string;
+  studentNameBn: string;
+  achievementEn: string;
+  achievementBn: string;
+  imageUrl: string;
+}
+
+export interface StudentProfileData {
+  _id: string;
+  nameEn: string;
+  nameBn: string;
+  batchEn: string;
+  batchBn: string;
+  rollNumber: string;
+  imageUrl: string;
+}
