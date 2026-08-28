@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import SiteSettings from '@/lib/models/SiteSettings';
+
 export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     await connectDB();
@@ -37,6 +40,13 @@ export async function PUT(request: NextRequest) {
       Object.assign(settings, updateData);
       await settings.save(); // এটি সবচেয়ে নিরাপদ সেভ মেথড!
     }
+
+    // Invalidate Next.js cache for both locale home pages so layout & hero
+    // immediately display the updated coachingName, logoUrl, hero content, etc.
+    revalidatePath('/en');
+    revalidatePath('/bn');
+    revalidatePath('/en/', 'layout');
+    revalidatePath('/bn/', 'layout');
 
     return NextResponse.json(settings);
   } catch (error: any) {

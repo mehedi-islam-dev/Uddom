@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import Founder from '@/lib/models/Founder';
 
@@ -29,6 +30,8 @@ export async function PUT(request: NextRequest) {
       { new: true, upsert: true, runValidators: true }
     );
 
+    revalidatePath('/en');
+    revalidatePath('/bn');
     return NextResponse.json(founder);
   } catch (error) {
     console.error('PUT /api/founder error:', error);

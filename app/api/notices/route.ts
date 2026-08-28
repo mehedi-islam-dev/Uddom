@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import Notice from '@/lib/models/Notice';
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,10 @@ export async function POST(request: NextRequest) {
       descriptionBn,
       date: date ? new Date(date) : new Date(),
     });
+
+    // Invalidate Next.js cache so the public frontend shows the new notice immediately
+    revalidatePath('/en');
+    revalidatePath('/bn');
 
     return NextResponse.json(notice, { status: 201 });
   } catch (error) {

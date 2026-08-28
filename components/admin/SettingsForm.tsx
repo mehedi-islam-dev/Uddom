@@ -43,7 +43,7 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
-      loading && setLoading(false);
+      setLoading(false);
     }
   };
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import Teacher from '@/lib/models/Teacher';
 
@@ -35,6 +36,12 @@ export async function POST(request: NextRequest) {
       photoUrl: photoUrl || '',
       order: order ?? 0,
     });
+
+    // Invalidate Next.js cache so the public frontend reflects new data immediately
+    revalidatePath('/en');
+    revalidatePath('/bn');
+    revalidatePath('/en/');
+    revalidatePath('/bn/');
 
     return NextResponse.json(teacher, { status: 201 });
   } catch (error) {

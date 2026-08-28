@@ -22,21 +22,26 @@ type Locale = 'en' | 'bn';
 
 async function fetchSettings(): Promise<SiteSettingsData> {
   try {
-    const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // In server components, always use localhost internally to avoid
+    // routing to the production URL during local development
+    const base =
+      process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000'
+        : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/settings`, {
-      next: { revalidate: 60 },
+      cache: 'no-store', // Always fetch fresh so layout reflects admin changes
     });
     if (!res.ok) throw new Error('Failed to fetch settings');
     return res.json();
   } catch {
     return {
-      coachingName: 'Shikkha Alo Coaching',
+      coachingName: 'Uddom Academic Care',
       logoUrl: '',
       address: '',
       phone: '',
       email: '',
       mapEmbedUrl: '',
-      metaTitle: 'Shikkha Alo Coaching Center',
+      metaTitle: 'Uddom Academic Care',
       metaDescription: 'Quality education for academic excellence.',
     };
   }
@@ -56,6 +61,11 @@ export async function generateMetadata({
       template: `%s | ${settings.coachingName}`,
     },
     description: settings.metaDescription,
+    icons: {
+      icon: '/favicon.ico',
+      shortcut: '/favicon.ico',
+      apple: '/favicon.ico',
+    },
     openGraph: {
       title: settings.metaTitle || settings.coachingName,
       description: settings.metaDescription,

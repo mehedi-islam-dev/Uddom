@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import Teacher from '@/lib/models/Teacher';
 
@@ -20,6 +21,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
 
+    // Invalidate Next.js cache so the public frontend reflects updated data immediately
+    revalidatePath('/en');
+    revalidatePath('/bn');
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error('PUT /api/teachers/[id] error:', error);
@@ -39,6 +44,10 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
     }
+
+    // Invalidate Next.js cache after deletion
+    revalidatePath('/en');
+    revalidatePath('/bn');
 
     return NextResponse.json({ message: 'Teacher deleted successfully' });
   } catch (error) {

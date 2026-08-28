@@ -14,11 +14,14 @@ import {
   StudentProfileData,
 } from '@/lib/types';
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const BASE =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3000'
+    : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 async function getTeachers(): Promise<TeacherData[]> {
   try {
-    const res = await fetch(`${BASE}/api/teachers`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/api/teachers`, { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -46,12 +49,12 @@ async function getFounder(): Promise<FounderData> {
 
 async function getSettings(): Promise<SiteSettingsData> {
   try {
-    const res = await fetch(`${BASE}/api/settings`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/api/settings`, { cache: 'no-store' });
     if (!res.ok) throw new Error();
     return res.json();
   } catch {
     return {
-      coachingName: 'Shikkha Alo Coaching',
+      coachingName: 'Uddom Academic Care',
       logoUrl: '',
       address: '',
       phone: '',
@@ -65,7 +68,7 @@ async function getSettings(): Promise<SiteSettingsData> {
 
 async function getNotices(): Promise<NoticeData[]> {
   try {
-    const res = await fetch(`${BASE}/api/notices`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/api/notices`, { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -75,7 +78,7 @@ async function getNotices(): Promise<NoticeData[]> {
 
 async function getSuccessStories(): Promise<SuccessStoryData[]> {
   try {
-    const res = await fetch(`${BASE}/api/success-stories`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/api/success-stories`, { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -85,7 +88,7 @@ async function getSuccessStories(): Promise<SuccessStoryData[]> {
 
 async function getStudents(): Promise<StudentProfileData[]> {
   try {
-    const res = await fetch(`${BASE}/api/students`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/api/students`, { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
   } catch {

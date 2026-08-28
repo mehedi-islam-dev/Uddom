@@ -27,8 +27,9 @@ export default function AdminLoginPage() {
         setError(t('login_error'));
         return;
       }
-      router.push(`/${locale}/admin/teachers`);
-      router.refresh();
+      // Hard navigation ensures the new page request goes through middleware
+      // with the freshly-set admin_token cookie already in the browser.
+      window.location.href = `/${locale}/admin/teachers`;
     } catch {
       setError(t('login_error'));
     } finally {
