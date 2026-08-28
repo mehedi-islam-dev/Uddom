@@ -120,7 +120,7 @@ export default function HeroSection() {
         {/* ── Main Content ── */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-32 md:py-40">
 
-          {/* 🌟 Special Offer Banner (ডাইনামিক) */}
+          {/* 🌟 Special Offer Banner (Dynamic) */}
           {siteData.isOfferActive && siteData.offerText && (
             <a
               href={siteData.offerLink}
@@ -138,12 +138,12 @@ export default function HeroSection() {
             {t('badge', { year: new Date().getFullYear() })}
           </div>
 
-          {/* Main Headline (ডাইনামিক) */}
+          {/* Main Headline (Dynamic) */}
           <h1 className="hero-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight mb-6">
             {siteData.title || t('headline')}
           </h1>
 
-          {/* Subtitle (ডাইনামিক) */}
+          {/* Subtitle (Dynamic) */}
           <p className="hero-sub text-lg sm:text-xl text-indigo-200/90 max-w-2xl mx-auto mb-12 leading-relaxed">
             {siteData.subtitle || t('subheadline')}
           </p>
@@ -165,7 +165,7 @@ export default function HeroSection() {
             </a>
           </div>
 
-          {/* Stats Bar (ডাইনামিক) */}
+          {/* Stats Bar (Dynamic) */}
           <div className="hero-stats grid grid-cols-3 gap-4 md:gap-8 max-w-xl mx-auto">
             {stats.map(({ icon: Icon, value, label }, i) => (
               <div
