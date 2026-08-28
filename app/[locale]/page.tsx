@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import HeroSection from '@/components/HeroSection';
 import FounderSection from '@/components/FounderSection';
 import FacultySection from '@/components/FacultySection';

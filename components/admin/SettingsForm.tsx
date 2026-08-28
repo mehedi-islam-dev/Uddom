@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Save, Loader2, CheckCircle } from 'lucide-react';
 import { SiteSettingsData } from '@/lib/types';
@@ -12,6 +13,7 @@ interface SettingsFormProps {
 
 export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) {
   const t = useTranslations('admin');
+  const router = useRouter();
   const [data, setData] = useState<SiteSettingsData>(initial);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -37,6 +39,7 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
         throw new Error(j.error || 'Failed');
       }
       const updated = await res.json();
+      router.refresh();
       onSuccess(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

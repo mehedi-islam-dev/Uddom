@@ -32,7 +32,7 @@ export default function ContactSection({ settings }: ContactSectionProps) {
 
   return (
     <section id="contact" className="py-20 lg:py-28 bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
@@ -43,7 +43,7 @@ export default function ContactSection({ settings }: ContactSectionProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           {/* Left: contact info + map */}
           <div className="space-y-6">
             {/* Contact Cards */}

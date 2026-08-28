@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Save, Loader2, CheckCircle, Upload, ImageOff, X } from 'lucide-react';
 import Image from 'next/image';
@@ -11,30 +12,28 @@ interface FounderFormProps {
   onSuccess: (founder: FounderData) => void;
 }
 
-/** Upload a File to ImgBB and return the direct image URL */
-async function uploadToImgBB(file: File): Promise<string> {
-  const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-  if (!apiKey) throw new Error('ImgBB API key not configured.');
-
+/** Upload a File to the local /api/upload endpoint and return the public URL */
+async function uploadToLocal(file: File): Promise<string> {
   const form = new FormData();
   form.append('image', file);
 
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+  const res = await fetch('/api/upload', {
     method: 'POST',
     body: form,
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'Image upload failed.');
+    throw new Error(err?.error || 'Image upload failed.');
   }
 
   const json = await res.json();
-  return json.data.display_url as string;
+  return json.url as string;
 }
 
 export default function FounderForm({ initial, onSuccess }: FounderFormProps) {
   const t = useTranslations('admin');
+  const router = useRouter();
   const [data, setData] = useState<FounderData>(initial);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -46,7 +45,7 @@ export default function FounderForm({ initial, onSuccess }: FounderFormProps) {
   const set = (field: keyof FounderData, value: string) =>
     setData((prev) => ({ ...prev, [field]: value }));
 
-  /** Handle file selection → upload to ImgBB → set photoUrl */
+  /** Handle file selection → upload locally → set photoUrl */
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -55,15 +54,15 @@ export default function FounderForm({ initial, onSuccess }: FounderFormProps) {
       setUploadError('Please select a valid image file.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('Image must be smaller than 5 MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be smaller than 10 MB.');
       return;
     }
 
     setUploading(true);
     setUploadError('');
     try {
-      const url = await uploadToImgBB(file);
+      const url = await uploadToLocal(file);
       set('photoUrl', url);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed.');
@@ -89,6 +88,7 @@ export default function FounderForm({ initial, onSuccess }: FounderFormProps) {
         throw new Error(j.error || 'Failed');
       }
       const updated = await res.json();
+      router.refresh();
       onSuccess(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -126,8 +126,8 @@ export default function FounderForm({ initial, onSuccess }: FounderFormProps) {
               fill
               className="object-cover"
               sizes="112px"
+              unoptimized={data.photoUrl.startsWith('/uploads/')}
             />
-            {/* Remove button */}
             <button
               type="button"
               onClick={() => set('photoUrl', '')}

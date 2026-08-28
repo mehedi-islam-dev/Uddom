@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { X, Save, Loader2 } from 'lucide-react';
 import { NoticeData } from '@/lib/types';
@@ -24,6 +25,7 @@ const EMPTY = {
 
 export default function NoticeForm({ initial, mode, onSuccess, onCancel }: NoticeFormProps) {
   const t = useTranslations('admin');
+  const router = useRouter();
   const [data, setData] = useState({ ...EMPTY, ...initial, date: initial?.date ? new Date(initial.date).toISOString().split('T')[0] : today });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +54,10 @@ export default function NoticeForm({ initial, mode, onSuccess, onCancel }: Notic
         throw new Error(j.error || 'Failed');
       }
       const notice = await res.json();
+      if (mode === 'add') {
+        setData({ ...EMPTY });
+      }
+      router.refresh();
       onSuccess(notice);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

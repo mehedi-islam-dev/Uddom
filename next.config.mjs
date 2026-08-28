@@ -6,11 +6,8 @@ const withNextIntl = createNextIntlPlugin('./i18n.ts');
 const nextConfig = {
   images: {
     remotePatterns: [
-      // Allow all HTTPS image sources (broad whitelist for external URLs)
+      // Allow all HTTPS image sources (broad whitelist for external URLs pasted by admins)
       { protocol: 'https', hostname: '**' },
-      // ImgBB CDN domains — explicitly listed for clarity and future tightening
-      { protocol: 'https', hostname: 'i.ibb.co' },
-      { protocol: 'https', hostname: 'ibb.co' },
     ],
   },
 };
