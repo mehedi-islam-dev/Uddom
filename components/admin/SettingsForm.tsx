@@ -17,7 +17,8 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  const set = (field: keyof SiteSettingsData, value: string) =>
+  // value কে string | boolean করা হয়েছে যাতে চেকবক্স কাজ করে
+  const set = (field: keyof SiteSettingsData, value: string | boolean) =>
     setData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,54 +43,101 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
-      setLoading(false);
+      loading && setLoading(false);
     }
   };
-
-  const fields: { key: keyof SiteSettingsData; label: string; type?: string; multiline?: boolean }[] = [
-    { key: 'coachingName', label: t('settings_name') },
-    { key: 'logoUrl', label: t('settings_logo') },
-    { key: 'address', label: t('settings_address'), multiline: true },
-    { key: 'phone', label: t('settings_phone') },
-    { key: 'email', label: t('settings_email'), type: 'email' },
-    { key: 'mapEmbedUrl', label: t('settings_map') },
-    { key: 'metaTitle', label: t('settings_meta_title') },
-    { key: 'metaDescription', label: t('settings_meta_desc'), multiline: true },
-  ];
 
   const inputClass =
     'w-full px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
 
+  // ফিল্ড রেন্ডার করার জন্য ছোট ফাংশন (যাতে কোড বারবার লিখতে না হয়)
+  const renderInput = (key: keyof SiteSettingsData, label: string, type: string = 'text', multiline: boolean = false) => (
+    <div key={key as string}>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor={`setting-${key as string}`}>
+        {label}
+      </label>
+      {multiline ? (
+        <textarea
+          id={`setting-${key as string}`}
+          rows={3}
+          value={(data[key] as string) || ''}
+          onChange={(e) => set(key, e.target.value)}
+          className={`${inputClass} resize-none`}
+        />
+      ) : (
+        <input
+          id={`setting-${key as string}`}
+          type={type}
+          value={(data[key] as string) || ''}
+          onChange={(e) => set(key, e.target.value)}
+          className={inputClass}
+        />
+      )}
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {fields.map(({ key, label, type, multiline }) => (
-        <div key={key}>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor={`setting-${key}`}>
-            {label}
-          </label>
-          {multiline ? (
-            <textarea
-              id={`setting-${key}`}
-              rows={3}
-              value={(data[key] as string) || ''}
-              onChange={(e) => set(key, e.target.value)}
-              className={`${inputClass} resize-none`}
-            />
-          ) : (
-            <input
-              id={`setting-${key}`}
-              type={type || 'text'}
-              value={(data[key] as string) || ''}
-              onChange={(e) => set(key, e.target.value)}
-              className={inputClass}
-            />
-          )}
+    <form onSubmit={handleSubmit} className="space-y-10">
+
+      {/* 1. General Settings */}
+      <div className="space-y-5">
+        <h3 className="text-lg font-bold text-gray-900 border-b pb-2">General Settings</h3>
+        {renderInput('coachingName', t('settings_name'))}
+        {renderInput('logoUrl', t('settings_logo'))}
+        {renderInput('address', t('settings_address'), 'text', true)}
+        {renderInput('phone', t('settings_phone'))}
+        {renderInput('email', t('settings_email'), 'email')}
+        {renderInput('mapEmbedUrl', t('settings_map'))}
+        {renderInput('metaTitle', t('settings_meta_title'))}
+        {renderInput('metaDescription', t('settings_meta_desc'), 'text', true)}
+      </div>
+
+      {/* 2. Hero Section Stats */}
+      <div className="space-y-5">
+        <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Hero Statistics</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {renderInput('totalStudents', 'Total Students (e.g. 200+)')}
+          {renderInput('totalTeachers', 'Total Teachers (e.g. 25+)')}
+          {renderInput('totalYears', 'Total Years (e.g. 12+)')}
         </div>
-      ))}
+      </div>
+
+      {/* 3. Hero Content */}
+      <div className="space-y-5">
+        <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Hero Content</h3>
+        {renderInput('heroTitle', 'Main Headline (Title)')}
+        {renderInput('heroSubtitle', 'Subheadline (Subtitle)', 'text', true)}
+      </div>
+
+      {/* 4. Special Offer Banner */}
+      <div className="space-y-5 bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
+        <h3 className="text-lg font-bold text-indigo-900">Special Offer Banner</h3>
+
+        <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-indigo-200">
+          <input
+            type="checkbox"
+            id="offerActive"
+            checked={!!data.isSpecialOfferActive}
+            onChange={(e) => set('isSpecialOfferActive', e.target.checked)}
+            className="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer"
+          />
+          <label htmlFor="offerActive" className="text-sm font-bold text-indigo-900 cursor-pointer">
+            Show Special Offer Banner on Home Page
+          </label>
+        </div>
+
+        {/* চেকবক্স টিক দিলে তবেই নিচের ইনপুট দুটি দেখাবে */}
+        {data.isSpecialOfferActive && (
+          <div className="space-y-5 pt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            {renderInput('specialOfferText', 'Offer Text (e.g. 🎉 নতুন ব্যাচে ভর্তি চলছে! ২০% ছাড়!)')}
+            {renderInput('specialOfferLink', 'Offer Link (e.g. /admission)')}
+          </div>
+        )}
+      </div>
 
       {/* Map Preview */}
       {data.mapEmbedUrl && (
-        <div>
+        <div className="mt-8">
           <p className="text-sm font-medium text-gray-700 mb-1.5">Map Preview</p>
           <div className="h-48 rounded-xl overflow-hidden border border-gray-200">
             <iframe
@@ -105,25 +153,27 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
         </div>
       )}
 
+      {/* Error Message */}
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
           {error}
         </p>
       )}
 
+      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}
-        className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-60 w-full sm:w-auto"
+        className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-60 w-full sm:w-auto mt-8"
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : saved ? (
-          <CheckCircle className="w-4 h-4" />
+          <CheckCircle className="w-5 h-5" />
         ) : (
-          <Save className="w-4 h-4" />
+          <Save className="w-5 h-5" />
         )}
-        {saved ? 'Saved!' : t('save')}
+        {saved ? 'Settings Saved Successfully!' : t('save')}
       </button>
     </form>
   );

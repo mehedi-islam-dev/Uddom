@@ -1,15 +1,55 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ArrowRight, ChevronDown, Users, GraduationCap, Star } from 'lucide-react';
+import { ArrowRight, ChevronDown, Users, GraduationCap, Star, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function HeroSection() {
   const t = useTranslations('hero');
 
+  // ডাইনামিক ডেটা রাখার জন্য State তৈরি করা হলো
+  const [siteData, setSiteData] = useState({
+    students: '200+',
+    teachers: '25+',
+    years: '12+',
+    title: '',
+    subtitle: '',
+    offerText: '',
+    offerLink: '#',
+    isOfferActive: false,
+  });
+
+  // API থেকে Settings-এর ডেটা আনার Effect
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings', { cache: 'no-store' });
+        const data = await res.json();
+
+        if (data) {
+          setSiteData({
+            students: data.totalStudents || '200+',
+            teachers: data.totalTeachers || '25+',
+            years: data.totalYears || '12+',
+            title: data.heroTitle || '',
+            subtitle: data.heroSubtitle || '',
+            offerText: data.specialOfferText || '',
+            offerLink: data.specialOfferLink || '#',
+            isOfferActive: data.isSpecialOfferActive || false,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // API থেকে আসা ডেটাগুলো দিয়ে Stats আপডেট করা হলো
   const stats = [
-    { icon: Users, value: '2,000+', label: t('stat_students') },
-    { icon: GraduationCap, value: '30+', label: t('stat_teachers') },
-    { icon: Star, value: '15+', label: t('stat_years') },
+    { icon: Users, value: siteData.students, label: t('stat_students') },
+    { icon: GraduationCap, value: siteData.teachers, label: t('stat_teachers') },
+    { icon: Star, value: siteData.years, label: t('stat_years') },
   ];
 
   return (
@@ -29,6 +69,7 @@ export default function HeroSection() {
           50%       { box-shadow: 0 0 0 8px rgba(167, 139, 250, 0); }
         }
         .hero-badge   { animation: heroFadeUp 0.6s ease-out 0.1s both; }
+        .hero-offer   { animation: heroFadeUp 0.5s ease-out 0.05s both; }
         .hero-heading { animation: heroFadeUp 0.7s ease-out 0.3s both; }
         .hero-sub     { animation: heroFadeUp 0.7s ease-out 0.5s both; }
         .hero-ctas    { animation: heroFadeUp 0.7s ease-out 0.65s both; }
@@ -51,7 +92,7 @@ export default function HeroSection() {
           aria-hidden="true"
         />
 
-        {/* Dark gradient overlay — ensures text readability over any image */}
+        {/* Dark gradient overlay */}
         <div
           className="absolute inset-0"
           style={{
@@ -79,20 +120,32 @@ export default function HeroSection() {
         {/* ── Main Content ── */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-32 md:py-40">
 
+          {/* 🌟 Special Offer Banner (ডাইনামিক) */}
+          {siteData.isOfferActive && siteData.offerText && (
+            <a
+              href={siteData.offerLink}
+              className="hero-offer inline-flex items-center gap-2 mb-6 px-5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 text-sm sm:text-base font-bold rounded-full shadow-lg hover:scale-105 transition-transform duration-300 hover:shadow-orange-500/30"
+            >
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              {siteData.offerText}
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          )}
+
           {/* Admission Badge */}
           <div className="hero-badge inline-flex items-center gap-2.5 bg-white/10 border border-white/20 text-white/95 text-xs sm:text-sm font-medium px-5 py-2 rounded-full mb-8 backdrop-blur-sm">
             <span className="w-2 h-2 bg-emerald-400 rounded-full pulse-ring shrink-0" />
             {t('badge', { year: new Date().getFullYear() })}
           </div>
 
-          {/* Main Headline */}
+          {/* Main Headline (ডাইনামিক) */}
           <h1 className="hero-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight mb-6">
-            {t('headline')}
+            {siteData.title || t('headline')}
           </h1>
 
-          {/* Subtitle */}
+          {/* Subtitle (ডাইনামিক) */}
           <p className="hero-sub text-lg sm:text-xl text-indigo-200/90 max-w-2xl mx-auto mb-12 leading-relaxed">
-            {t('subheadline')}
+            {siteData.subtitle || t('subheadline')}
           </p>
 
           {/* CTA Buttons */}
@@ -112,7 +165,7 @@ export default function HeroSection() {
             </a>
           </div>
 
-          {/* Stats Bar */}
+          {/* Stats Bar (ডাইনামিক) */}
           <div className="hero-stats grid grid-cols-3 gap-4 md:gap-8 max-w-xl mx-auto">
             {stats.map(({ icon: Icon, value, label }, i) => (
               <div

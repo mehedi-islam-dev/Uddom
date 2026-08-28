@@ -18,7 +18,7 @@ export default function ManageNoticesPage() {
   const fetchNotices = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/notices');
+      const res = await fetch('/api/notices', { cache: 'no-store' });
       if (res.ok) setNotices(await res.json());
     } finally {
       setLoading(false);

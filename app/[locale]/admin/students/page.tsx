@@ -19,7 +19,7 @@ export default function ManageStudentsPage() {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/students');
+      const res = await fetch('/api/students', { cache: 'no-store' });
       if (res.ok) setStudents(await res.json());
     } finally {
       setLoading(false);

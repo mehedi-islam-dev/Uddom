@@ -21,6 +21,14 @@ export interface SiteSettingsData {
   mapEmbedUrl: string;
   metaTitle: string;
   metaDescription: string;
+  totalStudents?: string;
+  totalTeachers?: string;
+  totalYears?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  specialOfferText?: string;
+  specialOfferLink?: string;
+  isSpecialOfferActive?: boolean;
 }
 
 export interface FounderData {

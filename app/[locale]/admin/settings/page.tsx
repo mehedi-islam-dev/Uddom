@@ -12,7 +12,7 @@ export default function SiteSettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/settings', { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => { setSettings(data); setLoading(false); })
       .catch(() => setLoading(false));

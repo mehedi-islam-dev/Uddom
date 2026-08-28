@@ -19,7 +19,7 @@ export default function ManageSuccessStoriesPage() {
   const fetchStories = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/success-stories');
+      const res = await fetch('/api/success-stories', { cache: 'no-store' });
       if (res.ok) setStories(await res.json());
     } finally {
       setLoading(false);

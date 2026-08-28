@@ -12,7 +12,7 @@ export default function ManageFounderPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/founder')
+    fetch('/api/founder', { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => { setFounder(data); setLoading(false); })
       .catch(() => setLoading(false));

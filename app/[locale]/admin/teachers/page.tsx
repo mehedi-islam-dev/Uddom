@@ -19,7 +19,7 @@ export default function ManageTeachersPage() {
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/teachers');
+      const res = await fetch('/api/teachers', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setTeachers(data);

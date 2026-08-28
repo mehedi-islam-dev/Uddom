@@ -28,7 +28,7 @@ async function getTeachers(): Promise<TeacherData[]> {
 
 async function getFounder(): Promise<FounderData> {
   try {
-    const res = await fetch(`${BASE}/api/founder`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BASE}/api/founder`, { cache: 'no-store' });
     if (!res.ok) throw new Error();
     return res.json();
   } catch {
