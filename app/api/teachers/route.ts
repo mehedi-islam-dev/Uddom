@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import Teacher from '@/lib/models/Teacher';
+import { requireAdminAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     await connectDB();
     const body = await request.json();
@@ -40,8 +44,6 @@ export async function POST(request: NextRequest) {
     // Invalidate Next.js cache so the public frontend reflects new data immediately
     revalidatePath('/en');
     revalidatePath('/bn');
-    revalidatePath('/en/');
-    revalidatePath('/bn/');
 
     return NextResponse.json(teacher, { status: 201 });
   } catch (error) {

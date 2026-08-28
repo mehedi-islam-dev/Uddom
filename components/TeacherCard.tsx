@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { Briefcase } from 'lucide-react';
@@ -25,32 +28,44 @@ function getSubjectColor(subject: string): string {
   return SUBJECT_COLORS.default;
 }
 
+/** Initials avatar shown when no photo or photo load fails */
+function InitialsAvatar({ name }: { name: string }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shadow-lg">
+        <span className="text-white text-4xl font-bold">
+          {name.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function TeacherCard({ teacher }: TeacherCardProps) {
   const locale = useLocale();
   const name = locale === 'bn' ? teacher.nameBn : teacher.nameEn;
   const subject = locale === 'bn' ? teacher.subjectBn : teacher.subjectEn;
   const subjectColor = getSubjectColor(teacher.subjectEn);
 
+  // Track whether the image has errored so we can fall back to initials
+  const [imgError, setImgError] = useState(false);
+  const showImage = !!teacher.photoUrl && !imgError;
+
   return (
     <div className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
       {/* Photo */}
       <div className="relative h-56 bg-gradient-to-br from-indigo-50 to-violet-50 overflow-hidden">
-        {teacher.photoUrl ? (
+        {showImage ? (
           <Image
             src={teacher.photoUrl}
             alt={name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            onError={() => setImgError(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shadow-lg">
-              <span className="text-white text-4xl font-bold">
-                {teacher.nameEn.charAt(0)}
-              </span>
-            </div>
-          </div>
+          <InitialsAvatar name={teacher.nameEn} />
         )}
         {/* Subject badge overlay */}
         <div className="absolute top-3 right-3">

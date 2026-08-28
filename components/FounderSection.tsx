@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { Quote } from 'lucide-react';
@@ -14,6 +17,10 @@ export default function FounderSection({ founder }: FounderSectionProps) {
   const name = locale === 'bn' ? founder.nameBn : founder.nameEn;
   const bio = locale === 'bn' ? founder.bioBn : founder.bioEn;
   const message = locale === 'bn' ? founder.messageBn : founder.messageEn;
+
+  // Track whether the founder photo has errored so we can show fallback
+  const [imgError, setImgError] = useState(false);
+  const showImage = !!founder.photoUrl && !imgError;
 
   return (
     <section id="founder" className="py-20 lg:py-28 bg-gradient-to-b from-gray-50 to-white">
@@ -34,19 +41,20 @@ export default function FounderSection({ founder }: FounderSectionProps) {
               {/* Decorative ring */}
               <div className="absolute -inset-4 bg-gradient-to-br from-indigo-200 to-violet-200 rounded-3xl rotate-3 opacity-60" />
               <div className="relative w-64 h-80 sm:w-80 sm:h-96 rounded-2xl overflow-hidden shadow-2xl">
-                {founder.photoUrl ? (
+                {showImage ? (
                   <Image
                     src={founder.photoUrl}
                     alt={name}
                     fill
                     className="object-cover"
                     sizes="(max-width: 640px) 256px, 320px"
+                    onError={() => setImgError(true)}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
                     <div className="w-28 h-28 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center">
                       <span className="text-white text-5xl font-bold">
-                        {name.charAt(0)}
+                        {name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -69,7 +77,7 @@ export default function FounderSection({ founder }: FounderSectionProps) {
               <Quote className="absolute top-4 left-4 w-8 h-8 text-indigo-200" />
               <h3 className="font-semibold text-indigo-900 mb-3 mt-2">{t('message_title')}</h3>
               <p className="text-gray-700 leading-relaxed italic text-sm md:text-base">
-                "{message}"
+                &ldquo;{message}&rdquo;
               </p>
             </div>
           </div>

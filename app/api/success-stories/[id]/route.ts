@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import SuccessStory from '@/lib/models/SuccessStory';
+import { requireAdminAuth } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     await connectDB();
@@ -26,6 +31,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Success story not found' }, { status: 404 });
     }
 
+    revalidatePath('/en');
+    revalidatePath('/bn');
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error('PUT /api/success-stories/[id] error:', error);
@@ -34,9 +42,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     await connectDB();
@@ -44,6 +55,10 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json({ error: 'Success story not found' }, { status: 404 });
     }
+
+    revalidatePath('/en');
+    revalidatePath('/bn');
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('DELETE /api/success-stories/[id] error:', error);

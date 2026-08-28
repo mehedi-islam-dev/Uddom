@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import SiteSettings from '@/lib/models/SiteSettings';
+import { requireAdminAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,30 +16,31 @@ export async function GET() {
     }
 
     return NextResponse.json(settings);
-  } catch (error: any) {
-    console.error('GET Settings Error:', error.message);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('GET Settings Error:', msg);
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     await connectDB();
     const body = await request.json();
 
-    // ১. ফর্ম থেকে আসা ডেটা থেকে ডাটাবেসের সিস্টেম আইডিগুলো আলাদা করে দিচ্ছি
+    // Strip Mongoose system fields before saving
     const { _id, __v, createdAt, updatedAt, ...updateData } = body;
 
-    // ২. আগের ডেটাবেস ডকুমেন্টটি খুঁজে বের করছি
     let settings = await SiteSettings.findOne({});
 
     if (!settings) {
-      // ৩. যদি একদমই কিছু না থাকে, নতুন তৈরি করবে
       settings = await SiteSettings.create(updateData);
     } else {
-      // ৪. আর যদি থাকে, তবে আগের ডকুমেন্টের ওপর নতুন ডেটাগুলো বসিয়ে সেভ করবে
       Object.assign(settings, updateData);
-      await settings.save(); // এটি সবচেয়ে নিরাপদ সেভ মেথড!
+      await settings.save();
     }
 
     // Invalidate Next.js cache for both locale home pages so layout & hero
@@ -49,9 +51,9 @@ export async function PUT(request: NextRequest) {
     revalidatePath('/bn/', 'layout');
 
     return NextResponse.json(settings);
-  } catch (error: any) {
-    // ৫. যদি এবারও ফেইল করে, তবে ঠিক কী কারণে ফেইল করেছে সেই আসল মেসেজটি ফর্মে পাঠাবে
-    console.error('PUT Settings Error:', error.message);
-    return NextResponse.json({ error: error.message || 'Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Server Error';
+    console.error('PUT Settings Error:', msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

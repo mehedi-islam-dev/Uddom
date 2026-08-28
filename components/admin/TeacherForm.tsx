@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { X, Save, Loader2 } from 'lucide-react';
+import { X, Save, Loader2, Upload, ImageOff } from 'lucide-react';
+import Image from 'next/image';
 import { TeacherData } from '@/lib/types';
 
 interface TeacherFormProps {
@@ -22,11 +23,37 @@ const EMPTY: Partial<TeacherData> = {
   order: 0,
 };
 
+/** Upload a File to ImgBB and return the direct image URL */
+async function uploadToImgBB(file: File): Promise<string> {
+  const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+  if (!apiKey) throw new Error('ImgBB API key not configured.');
+
+  const form = new FormData();
+  form.append('image', file);
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Image upload failed.');
+  }
+
+  const json = await res.json();
+  // Use display_url (direct image link without the ImgBB page wrapper)
+  return json.data.display_url as string;
+}
+
 export default function TeacherForm({ initial, onSuccess, onCancel, mode }: TeacherFormProps) {
   const t = useTranslations('admin');
   const [data, setData] = useState<Partial<TeacherData>>({ ...EMPTY, ...initial });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setData({ ...EMPTY, ...initial });
@@ -34,6 +61,35 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
 
   const set = (field: keyof TeacherData, value: string | number) => {
     setData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  /** Handle file selection → upload to ImgBB → set photoUrl */
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Basic client-side validation
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select a valid image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image must be smaller than 5 MB.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+    try {
+      const url = await uploadToImgBB(file);
+      set('photoUrl', url);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed.');
+    } finally {
+      setUploading(false);
+      // Reset file input so the same file can be re-selected if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,15 +117,17 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
     }
   };
 
-  const fields: { key: keyof TeacherData; label: string; type?: string; half?: boolean }[] = [
+  const textFields: { key: keyof TeacherData; label: string; type?: string; half?: boolean }[] = [
     { key: 'nameEn', label: t('teacher_name_en'), half: true },
     { key: 'nameBn', label: t('teacher_name_bn'), half: true },
     { key: 'subjectEn', label: t('teacher_subject_en'), half: true },
     { key: 'subjectBn', label: t('teacher_subject_bn'), half: true },
     { key: 'experience', label: t('teacher_experience') },
-    { key: 'photoUrl', label: t('teacher_photo') },
     { key: 'order', label: t('teacher_order'), type: 'number', half: true },
   ];
+
+  const inputClass =
+    'w-full px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -88,10 +146,11 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Text fields grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {fields.map(({ key, label, type, half }) => (
-              <div key={key} className={half === false ? 'sm:col-span-2' : half ? '' : 'sm:col-span-2'}>
+            {textFields.map(({ key, label, type, half }) => (
+              <div key={key} className={half ? '' : 'sm:col-span-2'}>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor={`field-${key}`}>
                   {label}
                 </label>
@@ -100,19 +159,93 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
                   type={type || 'text'}
                   value={data[key] as string}
                   onChange={(e) => set(key, type === 'number' ? +e.target.value : e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
             ))}
           </div>
 
+          {/* ── Photo Upload ── */}
+          <div className="sm:col-span-2 space-y-3">
+            <label className="block text-sm font-medium text-gray-700">
+              {t('teacher_photo')}
+            </label>
+
+            {/* Preview */}
+            {data.photoUrl && (
+              <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                <Image
+                  src={data.photoUrl}
+                  alt="Preview"
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
+                {/* Clear button */}
+                <button
+                  type="button"
+                  onClick={() => set('photoUrl', '')}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-500 transition-colors"
+                  title="Remove photo"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* File upload button */}
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="teacher-photo-upload"
+                disabled={uploading}
+              />
+              <label
+                htmlFor="teacher-photo-upload"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium cursor-pointer transition-all duration-200 ${
+                  uploading
+                    ? 'border-indigo-200 bg-indigo-50 text-indigo-400 cursor-not-allowed'
+                    : 'border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300'
+                }`}
+              >
+                {uploading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> Upload Photo</>
+                )}
+              </label>
+
+              {/* Manual URL fallback */}
+              {!data.photoUrl && !uploading && (
+                <input
+                  type="url"
+                  placeholder="…or paste image URL"
+                  value={data.photoUrl as string}
+                  onChange={(e) => set('photoUrl', e.target.value)}
+                  className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              )}
+            </div>
+
+            {uploadError && (
+              <p className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                <ImageOff className="w-3.5 h-3.5 shrink-0" />
+                {uploadError}
+              </p>
+            )}
+          </div>
+
           {error && (
-            <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
               {error}
             </p>
           )}
 
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onCancel}
@@ -122,7 +255,7 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploading}
               className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-60"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

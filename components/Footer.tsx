@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
-import { BookOpen, Phone, Mail, MapPin } from 'lucide-react';
+import Image from 'next/image';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { SiteSettingsData } from '@/lib/types';
 
 interface FooterProps {
@@ -19,9 +20,15 @@ export default function Footer({ settings }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2.5">
+              <div className="relative w-10 h-10 shrink-0 overflow-hidden rounded-md">
+                <Image
+                  src={settings.logoUrl || '/logo.png'}
+                  alt="Uddom Academic Care"
+                  width={40}
+                  height={40}
+                  className="object-contain w-full h-full"
+                />
               </div>
               <span className="text-white font-bold text-lg">{settings.coachingName}</span>
             </div>

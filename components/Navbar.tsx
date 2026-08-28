@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { Menu, X, BookOpen, Globe } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X, Globe } from 'lucide-react';
 
 interface NavbarProps {
   coachingName: string;
@@ -58,24 +59,24 @@ export default function Navbar({ coachingName, logoUrl }: NavbarProps) {
         <div className="flex items-center justify-between h-16 md:h-20">
 
           {/* Logo */}
-          <Link href={`/${locale}#home`} className="flex items-center gap-2 group shrink-0">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={coachingName} className="h-10 w-auto" />
-            ) : (
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-indigo-300/50 group-hover:scale-110 transition-all duration-300">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <span
-                  className={`font-extrabold text-lg tracking-tight transition-colors duration-300 ${
-                    scrolled ? 'text-gray-900' : 'text-white drop-shadow-md'
-                  }`}
-                >
-                  {coachingName}
-                </span>
-              </div>
-            )}
+          <Link href={`/${locale}#home`} className="flex items-center gap-2.5 group shrink-0">
+            <div className="relative w-10 h-10 shrink-0 overflow-hidden rounded-md group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-400/30 transition-all duration-300">
+              <Image
+                src={logoUrl || '/logo.png'}
+                alt="Uddom Academic Care"
+                width={40}
+                height={40}
+                className="object-contain w-full h-full"
+                priority
+              />
+            </div>
+            <span
+              className={`font-extrabold text-lg tracking-tight transition-colors duration-300 ${
+                scrolled ? 'text-gray-900' : 'text-white drop-shadow-md'
+              }`}
+            >
+              {coachingName}
+            </span>
           </Link>
 
           {/* Desktop Links */}

@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import Teacher from '@/lib/models/Teacher';
+import { requireAdminAuth } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     await connectDB();
     const { id } = await params;
@@ -33,9 +37,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
   try {
     await connectDB();
     const { id } = await params;
