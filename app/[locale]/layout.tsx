@@ -20,31 +20,27 @@ const notoSansBengali = Noto_Sans_Bengali({
 
 type Locale = 'en' | 'bn';
 
+import connectDB from '@/lib/mongodb';
+import SiteSettings from '@/lib/models/SiteSettings';
+
 async function fetchSettings(): Promise<SiteSettingsData> {
   try {
-    // In server components, always use localhost internally to avoid
-    // routing to the production URL during local development
-    const base =
-      process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3000'
-        : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const res = await fetch(`${base}/api/settings`, {
-      cache: 'no-store', // Always fetch fresh so layout reflects admin changes
-    });
-    if (!res.ok) throw new Error('Failed to fetch settings');
-    return res.json();
-  } catch {
-    return {
-      coachingName: 'Uddom Academic Care',
-      logoUrl: '',
-      address: '',
-      phone: '',
-      email: '',
-      mapEmbedUrl: '',
-      metaTitle: 'Uddom Academic Care',
-      metaDescription: 'Quality education for academic excellence.',
-    };
-  }
+    await connectDB();
+    const settings = await SiteSettings.findOne({}).lean();
+    if (settings) {
+      return JSON.parse(JSON.stringify(settings));
+    }
+  } catch {}
+  return {
+    coachingName: 'Uddom Academic Care',
+    logoUrl: '',
+    address: '',
+    phone: '',
+    email: '',
+    mapEmbedUrl: '',
+    metaTitle: 'Uddom Academic Care',
+    metaDescription: 'Quality education for academic excellence.',
+  };
 }
 
 export async function generateMetadata({

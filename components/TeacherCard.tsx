@@ -54,13 +54,14 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
   return (
     <div className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
       {/* Photo */}
-      <div className="relative h-56 bg-gradient-to-br from-indigo-50 to-violet-50 overflow-hidden">
+      <div className="relative w-full aspect-[4/5] bg-gray-100 overflow-hidden">
         {showImage ? (
           <Image
             src={teacher.photoUrl}
             alt={name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            unoptimized
+            className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             onError={() => setImgError(true)}
           />

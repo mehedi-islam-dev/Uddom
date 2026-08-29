@@ -17,11 +17,19 @@ export default function ContactSection({ settings }: ContactSectionProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
-    // Simulate submission (no backend endpoint required per scope)
-    await new Promise((r) => setTimeout(r, 1000));
-    setStatus('success');
-    setForm({ name: '', phone: '', message: '' });
-    setTimeout(() => setStatus('idle'), 5000);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (!res.ok) throw new Error('Failed to send message');
+      setStatus('success');
+      setForm({ name: '', phone: '', message: '' });
+      setTimeout(() => setStatus('idle'), 5000);
+    } catch (err) {
+      setStatus('error');
+    }
   };
 
   const contactItems = [
@@ -155,7 +163,7 @@ export default function ContactSection({ settings }: ContactSectionProps) {
                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold px-6 py-3.5 rounded-xl hover:shadow-lg hover:shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
-                {status === 'submitting' ? '...' : t('form_submit')}
+                {status === 'submitting' ? 'Sending...' : t('form_submit')}
               </button>
             </form>
           </div>

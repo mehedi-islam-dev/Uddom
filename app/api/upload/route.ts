@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { requireAdminAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -28,26 +26,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Image must be smaller than 10 MB' }, { status: 400 });
     }
 
-    // Get file extension from mime type or original filename
-    const originalName = file.name || 'upload';
-    const ext = path.extname(originalName).toLowerCase() || '.jpg';
-    const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg'];
-    const safeExt = allowedExts.includes(ext) ? ext : '.jpg';
+    const imgbbApiKey = process.env.IMGBB_API_KEY;
+    if (!imgbbApiKey) {
+      console.error('IMGBB_API_KEY is not defined in environment variables.');
+      return NextResponse.json({ error: 'Image upload service is not configured' }, { status: 500 });
+    }
 
-    // Generate unique filename: timestamp + random suffix
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).slice(2, 8);
-    const filename = `${timestamp}-${random}${safeExt}`;
-
-    // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-
-    // Write file to disk
+    // Convert file to base64
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadsDir, filename), buffer);
+    const base64Image = buffer.toString('base64');
 
-    const url = `/uploads/${filename}`;
+    // Prepare ImgBB formData
+    const imgbbFormData = new URLSearchParams();
+    imgbbFormData.append('key', imgbbApiKey);
+    imgbbFormData.append('image', base64Image);
+
+    // Upload to ImgBB
+    const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+      method: 'POST',
+      body: imgbbFormData,
+    });
+
+    const imgbbData = await imgbbRes.json();
+
+    if (!imgbbRes.ok || !imgbbData.success) {
+      console.error('ImgBB upload failed:', imgbbData);
+      return NextResponse.json({ error: 'Failed to upload image to ImgBB' }, { status: 500 });
+    }
+
+    const url = imgbbData.data.url;
     return NextResponse.json({ url }, { status: 201 });
   } catch (error) {
     console.error('POST /api/upload error:', error);

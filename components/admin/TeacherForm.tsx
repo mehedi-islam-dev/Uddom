@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { X, Save, Loader2, Upload, ImageOff } from 'lucide-react';
-import Image from 'next/image';
+import { Save, Loader2, Upload, ImageOff, X } from 'lucide-react';
 import { TeacherData } from '@/lib/types';
 
 interface TeacherFormProps {
@@ -24,23 +23,20 @@ const EMPTY: Partial<TeacherData> = {
   order: 0,
 };
 
-/** Upload a File to the local /api/upload endpoint and return the public URL */
-async function uploadToLocal(file: File): Promise<string> {
+async function uploadToImgBB(file: File): Promise<string> {
   const form = new FormData();
   form.append('image', file);
 
-  const res = await fetch('/api/upload', {
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=ef0b7a853f62d4c531024ccc09c81fe6`, {
     method: 'POST',
     body: form,
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error || 'Image upload failed.');
-  }
-
   const json = await res.json();
-  return json.url as string;
+  if (json.success) {
+    return json.data.url;
+  } else {
+    throw new Error(json.error?.message || 'Image upload failed to ImgBB.');
+  }
 }
 
 export default function TeacherForm({ initial, onSuccess, onCancel, mode }: TeacherFormProps) {
@@ -48,20 +44,19 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
   const router = useRouter();
   const [data, setData] = useState<Partial<TeacherData>>({ ...EMPTY, ...initial });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setData({ ...EMPTY, ...initial });
   }, [initial]);
 
-  const set = (field: keyof TeacherData, value: string | number) => {
+  const set = (field: keyof TeacherData, value: string | number) =>
     setData((prev) => ({ ...prev, [field]: value }));
-  };
 
-  /** Handle file selection → upload locally → set photoUrl */
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -78,7 +73,7 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
     setUploading(true);
     setUploadError('');
     try {
-      const url = await uploadToLocal(file);
+      const url = await uploadToImgBB(file);
       set('photoUrl', url);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed.');
@@ -161,40 +156,38 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
                   value={data[key] as string}
                   onChange={(e) => set(key, type === 'number' ? +e.target.value : e.target.value)}
                   className={inputClass}
+                  required={key === 'nameEn' || key === 'nameBn'}
                 />
               </div>
             ))}
           </div>
 
-          {/* ── Photo Upload ── */}
-          <div className="sm:col-span-2 space-y-3">
+          {/* 📷 Photo Upload Section */}
+          <div className="sm:col-span-2 space-y-4">
             <label className="block text-sm font-medium text-gray-700">
               {t('teacher_photo')}
             </label>
 
             {/* Preview */}
             {data.photoUrl && (
-              <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                <Image
+              <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                <img
                   src={data.photoUrl}
                   alt="Preview"
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                  unoptimized={data.photoUrl.startsWith('/uploads/')}
+                  className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => set('photoUrl', '')}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-500 transition-colors"
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-500 transition-colors"
                   title="Remove photo"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
 
-            {/* File upload button */}
+            {/* Standard File Upload Button */}
             <div className="flex items-center gap-3">
               <input
                 ref={fileInputRef}
@@ -207,29 +200,18 @@ export default function TeacherForm({ initial, onSuccess, onCancel, mode }: Teac
               />
               <label
                 htmlFor="teacher-photo-upload"
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium cursor-pointer transition-all duration-200 ${
+                className={`flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl border-2 border-dashed text-sm font-medium cursor-pointer transition-all duration-200 ${
                   uploading
                     ? 'border-indigo-200 bg-indigo-50 text-indigo-400 cursor-not-allowed'
-                    : 'border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300'
+                    : 'border-indigo-200 bg-indigo-50/50 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300'
                 }`}
               >
                 {uploading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Uploading to ImgBB…</>
                 ) : (
-                  <><Upload className="w-4 h-4" /> Upload Photo</>
+                  <><Upload className="w-4 h-4" /> Click to Browse Image</>
                 )}
               </label>
-
-              {/* Manual URL fallback */}
-              {!data.photoUrl && !uploading && (
-                <input
-                  type="url"
-                  placeholder="…or paste image URL"
-                  value={data.photoUrl as string}
-                  onChange={(e) => set('photoUrl', e.target.value)}
-                  className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-              )}
             </div>
 
             {uploadError && (

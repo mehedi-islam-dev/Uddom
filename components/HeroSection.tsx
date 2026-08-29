@@ -2,50 +2,27 @@
 
 import { useTranslations } from 'next-intl';
 import { ArrowRight, ChevronDown, Users, GraduationCap, Star, Sparkles } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { SiteSettingsData } from '@/lib/types';
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  settings?: SiteSettingsData;
+}
+
+export default function HeroSection({ settings }: HeroSectionProps) {
   const t = useTranslations('hero');
 
-  // ডাইনামিক ডেটা রাখার জন্য State তৈরি করা হলো
-  const [siteData, setSiteData] = useState({
-    students: '200+',
-    teachers: '25+',
-    years: '12+',
-    title: '',
-    subtitle: '',
-    offerText: '',
-    offerLink: '#',
-    isOfferActive: false,
-  });
+  // Fallback defaults if settings is undefined
+  const siteData = {
+    students: settings?.totalStudents || '200+',
+    teachers: settings?.totalTeachers || '25+',
+    years: settings?.totalYears || '12+',
+    title: settings?.heroTitle || '',
+    subtitle: settings?.heroSubtitle || '',
+    offerText: settings?.specialOfferText || '',
+    offerLink: settings?.specialOfferLink || '#',
+    isOfferActive: settings?.isSpecialOfferActive || false,
+  };
 
-  // API থেকে Settings-এর ডেটা আনার Effect
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch('/api/settings', { cache: 'no-store' });
-        const data = await res.json();
-
-        if (data) {
-          setSiteData({
-            students: data.totalStudents || '200+',
-            teachers: data.totalTeachers || '25+',
-            years: data.totalYears || '12+',
-            title: data.heroTitle || '',
-            subtitle: data.heroSubtitle || '',
-            offerText: data.specialOfferText || '',
-            offerLink: data.specialOfferLink || '#',
-            isOfferActive: data.isSpecialOfferActive || false,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch settings:", error);
-      }
-    };
-    fetchSettings();
-  }, []);
-
-  // API থেকে আসা ডেটাগুলো দিয়ে Stats আপডেট করা হলো
   const stats = [
     { icon: Users, value: siteData.students, label: t('stat_students') },
     { icon: GraduationCap, value: siteData.teachers, label: t('stat_teachers') },
@@ -54,7 +31,6 @@ export default function HeroSection() {
 
   return (
     <>
-      {/* Entrance animation keyframes */}
       <style>{`
         @keyframes heroFadeUp {
           from { opacity: 0; transform: translateY(28px); }
@@ -82,45 +58,35 @@ export default function HeroSection() {
         id="home"
         className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       >
-        {/* ── Background Image with layered gradients ── */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')",
+            backgroundImage: "url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')",
           }}
           aria-hidden="true"
         />
 
-        {/* Dark gradient overlay */}
         <div
           className="absolute inset-0"
           style={{
-            background:
-              'linear-gradient(135deg, rgba(30,27,75,0.92) 0%, rgba(49,46,129,0.85) 40%, rgba(76,29,149,0.88) 100%)',
+            background: 'linear-gradient(135deg, rgba(30,27,75,0.92) 0%, rgba(49,46,129,0.85) 40%, rgba(76,29,149,0.88) 100%)',
           }}
           aria-hidden="true"
         />
 
-        {/* Decorative ambient glows */}
         <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
-        {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage:
-              'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
             backgroundSize: '60px 60px',
           }}
           aria-hidden="true"
         />
 
-        {/* ── Main Content ── */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-32 md:py-40">
-
-          {/* 🌟 Special Offer Banner (Dynamic) */}
           {siteData.isOfferActive && siteData.offerText && (
             <a
               href={siteData.offerLink}
@@ -132,23 +98,19 @@ export default function HeroSection() {
             </a>
           )}
 
-          {/* Admission Badge */}
           <div className="hero-badge inline-flex items-center gap-2.5 bg-white/10 border border-white/20 text-white/95 text-xs sm:text-sm font-medium px-5 py-2 rounded-full mb-8 backdrop-blur-sm">
             <span className="w-2 h-2 bg-emerald-400 rounded-full pulse-ring shrink-0" />
             {t('badge', { year: new Date().getFullYear() })}
           </div>
 
-          {/* Main Headline (Dynamic) */}
           <h1 className="hero-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight tracking-tight mb-6">
-            {siteData.title || t('headline')}
+            {t('headline')}
           </h1>
 
-          {/* Subtitle (Dynamic) */}
           <p className="hero-sub text-lg sm:text-xl text-indigo-200/90 max-w-2xl mx-auto mb-12 leading-relaxed">
-            {siteData.subtitle || t('subheadline')}
+            {t('subheadline')}
           </p>
 
-          {/* CTA Buttons */}
           <div className="hero-ctas flex flex-col sm:flex-row gap-4 justify-center items-center mb-20">
             <a
               href="#contact"
@@ -165,7 +127,6 @@ export default function HeroSection() {
             </a>
           </div>
 
-          {/* Stats Bar (Dynamic) */}
           <div className="hero-stats grid grid-cols-3 gap-4 md:gap-8 max-w-xl mx-auto">
             {stats.map(({ icon: Icon, value, label }, i) => (
               <div
@@ -186,7 +147,6 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Scroll Indicator */}
         <a
           href="#founder"
           className="hero-scroll absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 hover:text-white/90 transition-colors duration-200 animate-bounce"

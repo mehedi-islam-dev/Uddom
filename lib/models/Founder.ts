@@ -8,6 +8,7 @@ export interface IFounder extends Document {
   messageEn: string;
   messageBn: string;
   photoUrl: string;
+  order: number;
 }
 
 const FounderSchema = new Schema<IFounder>(
@@ -38,6 +39,7 @@ const FounderSchema = new Schema<IFounder>(
       trim: true,
     },
     photoUrl: { type: String, default: '', trim: true },
+    order: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

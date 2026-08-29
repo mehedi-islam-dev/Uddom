@@ -31,13 +31,23 @@ export default function Navbar({ coachingName, logoUrl }: NavbarProps) {
     setIsOpen(false);
   }, [pathname]);
 
+  // Hide the public Navbar on all admin routes
+  // (Must be placed after all hooks to obey React rules)
+  if (pathname.includes('/admin')) {
+    return null;
+  }
+
+  // Check if we're exactly on the home page for the current locale
+  const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
+
   const navLinks = [
-    { label: t('home'), href: '#home' },
-    { label: t('faculty'), href: '#faculty' },
-    { label: t('notices'), href: '#notices' },
-    { label: t('students'), href: '#students' },
-    { label: t('success_stories'), href: '#success-stories' },
-    { label: t('contact'), href: '#contact' },
+    { label: t('home'), href: isHome ? '#home' : `/${locale}#home` },
+    { label: t('faculty'), href: isHome ? '#faculty' : `/${locale}#faculty` },
+    { label: t('notices'), href: isHome ? '#notices' : `/${locale}#notices` },
+    { label: t('students'), href: isHome ? '#students' : `/${locale}#students` },
+    { label: t('success_stories'), href: isHome ? '#success-stories' : `/${locale}#success-stories` },
+    { label: t('contact'), href: isHome ? '#contact' : `/${locale}#contact` },
+    { label: 'Admin', href: `/${locale}/admin/login` },
   ];
 
   const switchLocale = () => {
@@ -82,7 +92,7 @@ export default function Navbar({ coachingName, logoUrl }: NavbarProps) {
           {/* Desktop Links */}
           <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 className={`relative text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 group ${
@@ -98,7 +108,7 @@ export default function Navbar({ coachingName, logoUrl }: NavbarProps) {
                     scrolled ? 'bg-indigo-500' : 'bg-white/70'
                   }`}
                 />
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -162,14 +172,14 @@ export default function Navbar({ coachingName, logoUrl }: NavbarProps) {
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl mb-4 border border-gray-100 overflow-hidden">
             <div className="flex flex-col p-3 gap-0.5">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
                   className="px-4 py-3 text-gray-700 font-medium rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-150 text-sm"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <div className="border-t border-gray-100 mt-2 pt-2 flex gap-2 px-1">
                 <button

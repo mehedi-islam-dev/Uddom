@@ -40,6 +40,7 @@ export interface FounderData {
   messageEn: string;
   messageBn: string;
   photoUrl: string;
+  order?: number;
 }
 
 export interface NoticeData {

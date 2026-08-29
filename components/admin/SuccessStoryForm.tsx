@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { X, Save, Loader2, Upload, ImageOff } from 'lucide-react';
-import Image from 'next/image';
 import { SuccessStoryData } from '@/lib/types';
 
 interface SuccessStoryFormProps {
@@ -22,23 +21,24 @@ const EMPTY = {
   imageUrl: '',
 };
 
-/** Upload a File to the local /api/upload endpoint and return the public URL */
-async function uploadToLocal(file: File): Promise<string> {
+/** ImgBB te chobi upload korar function */
+async function uploadToImgBB(file: File): Promise<string> {
   const form = new FormData();
   form.append('image', file);
 
-  const res = await fetch('/api/upload', {
+  // YOUR_IMGBB_API_KEY er jaygay ImgBB theke pawa apnar API key din
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=ef0b7a853f62d4c531024ccc09c81fe6`, {
     method: 'POST',
     body: form,
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error || 'Image upload failed.');
-  }
-
   const json = await res.json();
-  return json.url as string;
+
+  if (json.success) {
+    return json.data.url;
+  } else {
+    throw new Error(json.error?.message || 'Image upload failed to ImgBB.');
+  }
 }
 
 export default function SuccessStoryForm({ initial, mode, onSuccess, onCancel }: SuccessStoryFormProps) {
@@ -63,9 +63,12 @@ export default function SuccessStoryForm({ initial, mode, onSuccess, onCancel }:
     if (!file) return;
     if (!file.type.startsWith('image/')) { setUploadError('Please select a valid image file.'); return; }
     if (file.size > 10 * 1024 * 1024) { setUploadError('Image must be smaller than 10 MB.'); return; }
-    setUploading(true); setUploadError('');
+
+    setUploading(true);
+    setUploadError('');
+
     try {
-      const url = await uploadToLocal(file);
+      const url = await uploadToImgBB(file);
       set('imageUrl', url);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed.');
@@ -146,13 +149,10 @@ export default function SuccessStoryForm({ initial, mode, onSuccess, onCancel }:
             <label className="block text-sm font-medium text-gray-700">{t('story_photo')}</label>
             {data.imageUrl && (
               <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                <Image
+                <img
                   src={data.imageUrl}
                   alt="Preview"
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                  unoptimized={data.imageUrl.startsWith('/uploads/')}
+                  className="w-full h-full object-cover"
                 />
                 <button type="button" onClick={() => set('imageUrl', '')} className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-500 transition-colors">
                   <X className="w-3 h-3" />
@@ -164,9 +164,6 @@ export default function SuccessStoryForm({ initial, mode, onSuccess, onCancel }:
               <label htmlFor="story-image-upload" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium cursor-pointer transition-all duration-200 ${uploading ? 'border-indigo-200 bg-indigo-50 text-indigo-400 cursor-not-allowed' : 'border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300'}`}>
                 {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : <><Upload className="w-4 h-4" /> Upload Image</>}
               </label>
-              {!data.imageUrl && !uploading && (
-                <input type="url" placeholder="…or paste image URL" value={data.imageUrl} onChange={(e) => set('imageUrl', e.target.value)} className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-              )}
             </div>
             {uploadError && (
               <p className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">

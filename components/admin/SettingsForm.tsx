@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Save, Loader2, CheckCircle } from 'lucide-react';
+import { Save, Loader2, CheckCircle, UploadCloud } from 'lucide-react';
 import { SiteSettingsData } from '@/lib/types';
 
 interface SettingsFormProps {
@@ -19,9 +19,44 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  // value কে string | boolean করা হয়েছে যাতে চেকবক্স কাজ করে
+  // ImgBB Upload er jonno notun state
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const set = (field: keyof SiteSettingsData, value: string | boolean) =>
     setData((prev) => ({ ...prev, [field]: value }));
+
+  // ImgBB te chobi upload korar function
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      // YOUR_IMGBB_API_KEY er jaygay apnar asol ImgBB API key dite hobe
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const imgData = await res.json();
+
+      if (imgData.success) {
+        // Upload successful hole ImgBB theke pawa link state-e save hobe
+        set('logoUrl', imgData.data.url);
+      } else {
+        setError('Image upload failed to ImgBB.');
+      }
+    } catch (err) {
+      setError('Error uploading image. Please check your connection.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +88,6 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
   const inputClass =
     'w-full px-3 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
 
-  // ফিল্ড রেন্ডার করার জন্য ছোট ফাংশন (যাতে কোড বারবার লিখতে না হয়)
   const renderInput = (key: keyof SiteSettingsData, label: string, type: string = 'text', multiline: boolean = false) => (
     <div key={key as string}>
       <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor={`setting-${key as string}`}>
@@ -86,7 +120,32 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
       <div className="space-y-5">
         <h3 className="text-lg font-bold text-gray-900 border-b pb-2">General Settings</h3>
         {renderInput('coachingName', t('settings_name'))}
-        {renderInput('logoUrl', t('settings_logo'))}
+
+        {/* Custom Image Upload Field for Logo */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            {t('settings_logo')} (Upload Image)
+          </label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg cursor-pointer hover:bg-indigo-100 transition-colors">
+              {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+              <span className="text-sm font-medium">{uploadingImage ? 'Uploading...' : 'Choose File'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploadingImage}
+              />
+            </label>
+            {data.logoUrl && (
+              <img src={data.logoUrl} alt="Logo Preview" className="h-10 w-auto rounded border" />
+            )}
+          </div>
+          {/* Hidden input to keep track of the url for submission if needed */}
+          <input type="hidden" value={data.logoUrl || ''} />
+        </div>
+
         {renderInput('address', t('settings_address'), 'text', true)}
         {renderInput('phone', t('settings_phone'))}
         {renderInput('email', t('settings_email'), 'email')}
@@ -129,10 +188,9 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
           </label>
         </div>
 
-        {/* চেকবক্স টিক দিলে তবেই নিচের ইনপুট দুটি দেখাবে */}
         {data.isSpecialOfferActive && (
           <div className="space-y-5 pt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            {renderInput('specialOfferText', 'Offer Text (e.g. 🎉 নতুন ব্যাচে ভর্তি চলছে! ২০% ছাড়!)')}
+            {renderInput('specialOfferText', 'Offer Text')}
             {renderInput('specialOfferLink', 'Offer Link (e.g. /admission)')}
           </div>
         )}
@@ -166,7 +224,7 @@ export default function SettingsForm({ initial, onSuccess }: SettingsFormProps) 
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || uploadingImage}
         className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all disabled:opacity-60 w-full sm:w-auto mt-8"
       >
         {loading ? (

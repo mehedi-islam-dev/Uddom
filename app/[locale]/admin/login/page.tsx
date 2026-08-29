@@ -27,9 +27,9 @@ export default function AdminLoginPage() {
         setError(t('login_error'));
         return;
       }
-      // Hard navigation via replace() — ensures the cookie is sent on the
-      // next full HTTP request AND removes login from browser history.
-      window.location.replace(`/${locale}/admin/teachers`);
+      // Navigate via next/navigation router
+      router.push(`/${locale}/admin/teachers`);
+      router.refresh();
     } catch {
       setError(t('login_error'));
     } finally {
